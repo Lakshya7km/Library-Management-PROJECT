@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Book</title>
+  <style>
+    /* CSS Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+    }
+    h2 {
+      margin-bottom: 1rem;
+    }
+    .book-details, .issue-form {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .success-message {
+      color: green;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Issue Book</h2>
+
+  <div class="book-details" id="bookDetails">
+    <h3>Book Title: <span id="bookTitle">Loading...</span></h3>
+    <p>Author: <span id="bookAuthor">Loading...</span></p>
+    <p>ISBN: <span id="bookISBN">Loading...</span></p>
+    <p>Year: <span id="bookYear">Loading...</span></p>
+    <p>Edition: <span id="bookEdition">Loading...</span></p>
+  </div>
+
+  <div class="issue-form">
+    <h3>Student Information</h3>
+    <label for="studentName">Student Name:</label>
+    <input type="text" id="studentName" required>
+    <label for="rollNumber">Roll Number:</label>
+    <input type="text" id="rollNumber" required>
+
+    <h3>Select Issue and Return Dates</h3>
+    <label for="issueDate">Issue Date:</label>
+    <input type="date" id="issueDate" required>
+    <label for="returnDate">Return Date:</label>
+    <input type="date" id="returnDate" required>
+    <button id="issueButton">Issue Book</button>
+    <div class="success-message" id="successMessage"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const bookId = params.get('bookId');
+      if (!bookId) {
+        alert("No Book ID found in the URL.");
+        return;
+      }
+      console.log("Book ID from URL:", bookId);
+      fetchBookDetails(bookId);
+
+      // Issue button event
+      document.getElementById("issueButton").addEventListener("click", () => {
+        issueBook(bookId);
+      });
+    });
+
+    function fetchBookDetails(bookId) {
+      fetch(`/api/book/${bookId}`)
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch book details');
+          return response.json();
+        })
+        .then(data => {
+          document.getElementById("bookTitle").textContent = data.title || "N/A";
+          document.getElementById("bookAuthor").textContent = data.author || "N/A";
+          document.getElementById("bookISBN").textContent = data.isbn || "N/A";
+          document.getElementById("bookYear").textContent = data.year || "N/A";
+          document.getElementById("bookEdition").textContent = data.edition || "N/A";
+        })
+        .catch(error => {
+          console.error('Error fetching book details:', error);
+          document.getElementById("bookDetails").textContent = 'Error loading book details.';
+        });
+    }
+
+    function issueBook(bookId) {
+      const studentName = document.getElementById("studentName").value;
+      const rollNumber = document.getElementById("rollNumber").value;
+      const issueDate = document.getElementById("issueDate").value;
+      const returnDate = document.getElementById("returnDate").value;
+      const bookTitle = document.getElementById("bookTitle").textContent;
+
+      if (!studentName || !rollNumber || !issueDate || !returnDate || bookTitle === "N/A" || !bookTitle) {
+        alert('Please fill out all fields and ensure book details are loaded.');
+        return;
+      }
+
+      // Date validation
+      if (new Date(returnDate) <= new Date(issueDate)) {
+        alert('Return date must be after the issue date');
+        return;
+      }
+
+      const data = {
+        bookId: bookId,
+        bookName: bookTitle,
+        issueDate: issueDate,
+        returnDate: returnDate,
+        studentName: studentName,
+        userId: rollNumber
+      };
+
+      console.log("Data being sent to /api/issue_book:", data);
+
+      fetch('/api/issue_book', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to issue book');
+        return response.json();
+      })
+      .then(data => {
+        document.getElementById("successMessage").textContent = 'Book issued successfully!';
+        document.getElementById("studentName").value = '';
+        document.getElementById("rollNumber").value = '';
+        document.getElementById("issueDate").value = '';
+        document.getElementById("returnDate").value = '';
+      })
+      .catch(error => {
+        console.error('Error issuing book:', error);
+        document.getElementById("successMessage").textContent = 'Error issuing the book.';
+      });
+    }
+  </script>
+</body>
+</html>

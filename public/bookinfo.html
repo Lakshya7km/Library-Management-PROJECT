@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Details</title>
+</head>
+<body>
+  <h2>Book Details</h2>
+  <div id="bookDetails"></div>
+
+  <h3>Issue This Book</h3>
+  <form id="issueForm">
+    <label for="studentName">Student Name:</label>
+    <input type="text" id="studentName" required><br>
+
+    <label for="userId">User ID (Roll Number):</label>
+    <input type="text" id="userId" required><br>
+
+    <label for="issueDate">Issue Date:</label>
+    <input type="date" id="issueDate" required><br>
+
+    <label for="returnDate">Return Date:</label>
+    <input type="date" id="returnDate" required><br>
+
+    <button type="submit">Issue Book</button>
+  </form>
+
+ <script>
+  // Get bookId from URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookId = urlParams.get('bookId');
+  let bookName = ""; // To store the book name
+
+  // Fetch book details from the backend
+  fetch(`/api/book/${bookId}`)
+    .then(response => response.json())
+    .then(data => {
+      // Store the book name
+      bookName = data.title;
+
+      // Display the book details
+      const bookDetailsDiv = document.getElementById('bookDetails');
+      bookDetailsDiv.innerHTML = `
+        <p><strong>Book Name:</strong> ${data.title}</p>
+        <p><strong>Author:</strong> ${data.author}</p>
+        <p><strong>ISBN:</strong> ${data.isbn}</p>
+        <p><strong>Year:</strong> ${data.year}</p>
+        <p><strong>Edition:</strong> ${data.edition}</p>
+        <p><strong>Status:</strong> ${data.is_available ? 'Available' : 'Issued'}</p>
+      `;
+    })
+    .catch(error => {
+      console.error('Error fetching book details:', error);
+      document.getElementById('bookDetails').innerHTML = "Error fetching book details.";
+    });
+
+  // Handle the issue book form submission
+  document.getElementById('issueForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const studentName = document.getElementById('studentName').value;
+    const userId = document.getElementById('userId').value;
+    const issueDate = document.getElementById('issueDate').value;
+    const returnDate = document.getElementById('returnDate').value;
+
+    // Include bookName in the data to be sent
+    const data = {
+      userId,
+      studentName,
+      bookId,
+      bookName, // Add bookName to the data
+      issueDate,
+      returnDate,
+      status: "Issued"
+    };
+
+    // Insert into the issued_books table
+    fetch('/api/issue-book', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(responseData => {
+      alert(responseData.message || "Book issued successfully.");
+      window.location.href = "student_dashboard.html"; // Redirect to home or books list after issue
+    })
+    .catch(error => {
+      console.error('Error issuing book:', error);
+      alert('Error issuing book. Please try again.');
+    });
+  });
+</script>
+
+</body>
+</html>

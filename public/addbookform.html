@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Book</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+        }
+        h2 {
+            margin-bottom: 1rem;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            max-width: 400px;
+        }
+        label {
+            margin-top: 1rem;
+        }
+        input[type="text"],
+        input[type="number"],
+        button {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Add Book</h2>
+<form id="addBookForm">
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" required>
+
+    <label for="author">Author:</label>
+    <input type="text" id="author" name="author" required>
+
+    <label for="isbn">ISBN:</label>
+    <input type="text" id="isbn" name="isbn" required>
+
+    <label for="year">Year:</label>
+    <input type="number" id="year" name="year" required>
+
+    <label for="edition">Edition:</label>
+    <input type="text" id="edition" name="edition" required>
+
+    <button type="submit">Save</button>
+</form>
+
+<script>
+   document.getElementById("addBookForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const bookData = {
+        title: document.getElementById("title").value,
+        author: document.getElementById("author").value,
+        isbn: document.getElementById("isbn").value,
+        year: document.getElementById("year").value,
+        edition: document.getElementById("edition").value
+    };
+
+    fetch('/api/addBook', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bookData)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("Book added successfully!");
+            this.reset();
+        } else {
+            alert("Error adding book.");
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Error adding book.");
+    });
+});
+
+</script>
+
+</body>
+</html>

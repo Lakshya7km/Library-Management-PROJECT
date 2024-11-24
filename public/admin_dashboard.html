@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    /* CSS Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: #4CAF50;
+      color: white;
+    }
+    .main-content {
+      margin: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin-right: 1rem;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Admin Dashboard</h1>
+  <a href="/" style="color: white;">Logout</a>
+</header>
+
+<main class="main-content">
+  <h2>Admin Actions</h2>
+  <button onclick="window.location.href='addbookform.html'">Add Book</button>
+  <button onclick="window.location.href='return.html'">update the return history</button>
+  <button onclick="window.location.href='studentinfo.html'">Show Student Information</button>
+
+  <h2>Books List</h2>
+  <table id="bookList">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>ISBN</th>
+        <th>Year</th>
+        <th>Edition</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Book rows will be populated dynamically -->
+    </tbody>
+  </table>
+</main>
+
+<script>
+  // Fetch and display the list of books
+  function fetchBooks() {
+    fetch('/api/books') // Replace with your actual API endpoint
+      .then(response => response.json())
+      .then(data => {
+        const bookList = document.getElementById("bookList").getElementsByTagName("tbody")[0];
+        bookList.innerHTML = '';  // Clear previous entries
+
+        data.forEach(book => {
+          const row = bookList.insertRow();
+          const titleCell = row.insertCell(0);
+          const authorCell = row.insertCell(1);
+          const isbnCell = row.insertCell(2);
+          const yearCell = row.insertCell(3);
+          const editionCell = row.insertCell(4);
+          const statusCell = row.insertCell(5);
+          const actionCell = row.insertCell(6);
+
+          titleCell.textContent = book.title;
+          authorCell.textContent = book.author;
+          isbnCell.textContent = book.isbn;
+          yearCell.textContent = book.year;
+          editionCell.textContent = book.edition;
+          statusCell.textContent = book.is_available ? "Available" : "Issued";
+
+          // Delete button
+          const deleteButton = document.createElement("button");
+          deleteButton.textContent = "Delete";
+          deleteButton.onclick = () => deleteBook(book.id);
+          actionCell.appendChild(deleteButton);
+        });
+      })
+      .catch(error => console.error('Error fetching book list:', error));
+  }
+
+  // Function to delete a book
+  function deleteBook(bookId) {
+    if (confirm('Are you sure you want to delete this book?')) {
+      fetch(`/api/books/${bookId}`, { method: 'DELETE' })
+        .then(response => {
+          if (response.ok) {
+            alert('Book deleted successfully');
+            fetchBooks(); // Refresh the book list
+          } else {
+            return response.json().then(data => {
+              alert(data.message || 'Error deleting book'); // Show server message if available
+            });
+          }
+        })
+        .catch(error => console.error('Error deleting book:', error));
+    }
+  }
+
+  // Initial fetch of books when the page loads
+  document.addEventListener('DOMContentLoaded', fetchBooks);
+</script>
+
+</body>
+</html>

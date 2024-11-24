@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+        }
+        h2 {
+            margin-bottom: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Student Information</h2>
+<button id="loadStudents">Load Student Information</button>
+<table id="studentsTable">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Roll Number</th>
+            <th>Name</th>
+            <th>Branch</th>
+            <th>Year</th>
+            <th>Semester</th>
+            <th>Contact</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Student data will be populated here -->
+    </tbody>
+</table>
+
+<script>
+    document.getElementById('loadStudents').addEventListener('click', function() {
+        fetch('/api/all_students')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch student information');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tbody = document.getElementById('studentsTable').querySelector('tbody');
+                tbody.innerHTML = ''; // Clear existing data
+
+                data.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${student.email}</td>
+                        <td>${student.roll_number}</td>
+                        <td>${student.name}</td>
+                        <td>${student.branch}</td>
+                        <td>${student.year}</td>
+                        <td>${student.semester}</td>
+                        <td>${student.contact}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading student information:', error);
+            });
+    });
+</script>
+
+</body>
+</html>

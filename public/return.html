@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Book</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Return Book</h1>
+    <table id="issuedBooksTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Student Name</th>
+                <th>Book Name</th>
+                <th>Book ID</th>
+                <th>Issue Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows will be populated here by JavaScript -->
+        </tbody>
+    </table>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchIssuedBooks();
+    });
+
+    function fetchIssuedBooks() {
+        fetch('/api/issued_books')  // This fetches only the non-returned books
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('issuedBooksTable').getElementsByTagName('tbody')[0];
+                tableBody.innerHTML = '';  // Clear the table before inserting new data
+
+                data.forEach(book => {
+                    const row = tableBody.insertRow();
+                    row.id = `book-row-${book.id}`; // Assign a unique ID to the row
+                    row.insertCell(0).innerText = book.id;
+                    row.insertCell(1).innerText = book.user_id;
+                    row.insertCell(2).innerText = book.student_name;
+                    row.insertCell(3).innerText = book.book_name;
+                    row.insertCell(4).innerText = book.book_id;
+                    row.insertCell(5).innerText = book.issue_date;
+                    row.insertCell(6).innerText = book.return_date;
+
+                    // Dropdown for status change
+                    const statusCell = row.insertCell(7);
+                    const statusSelect = document.createElement('select');
+                    ['Pending', 'Returned', 'Overdue'].forEach(status => {
+                        const option = document.createElement('option');
+                        option.value = status;
+                        option.innerText = status;
+                        if (status === book.status) option.selected = true;
+                        statusSelect.appendChild(option);
+                    });
+                    statusCell.appendChild(statusSelect);
+
+                    // Create action button for returning the book
+                    const actionCell = row.insertCell(8);
+                    const returnButton = document.createElement('button');
+                    returnButton.innerText = 'Proceed';
+                    returnButton.onclick = () => returnBook(book.id, statusSelect.value, row);  // Pass the row to remove it after return
+                    actionCell.appendChild(returnButton);
+                });
+            })
+            .catch(error => console.error('Error fetching issued books:', error));
+    }
+
+    function returnBook(bookId, status, row) {
+        fetch(`/api/return_book/${bookId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status })
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Return recorded successfully!');
+                row.remove();  // Remove the row from the table after successful return
+                fetchIssuedBooks();  // Fetch the updated list of issued books to reflect the changes
+            } else {
+                alert('Failed to record return.');
+            }
+        })
+        .catch(error => console.error('Error recording return:', error));
+    }
+</script>
+</body>
+</html>

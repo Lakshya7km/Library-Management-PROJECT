@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+
+        .loading-message {
+            text-align: center;
+            font-size: 16px;
+            color: #777;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .input-group button {
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Your Issued Books</h1>
+
+    <div class="input-group">
+        <input type="text" id="roll-number" placeholder="Enter your roll number" required>
+        <button id="fetch-books">Fetch Book History</button>
+    </div>
+
+    <table id="issued-books-table">
+        <thead>
+            <tr>
+                <th>Book Name</th>
+                <th>Issued Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="issued-books-table-body">
+            <tr><td colspan="4" class="loading-message">Loading...</td></tr>
+        </tbody>
+    </table>
+
+    <div id="error-message" class="error-message"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fetchButton = document.getElementById('fetch-books');
+            const tableBody = document.getElementById('issued-books-table-body');
+            const errorMessage = document.getElementById('error-message');
+
+            fetchButton.addEventListener('click', () => {
+                const rollNumber = document.getElementById('roll-number').value.trim();
+                if (!rollNumber) {
+                    alert('Please enter a roll number.');
+                    return;
+                }
+
+                tableBody.innerHTML = '<tr><td colspan="4" class="loading-message">Loading...</td></tr>'; // Show loading message
+                errorMessage.innerText = ''; // Clear previous error message
+
+                fetch(`/api/book_history/${rollNumber}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok: ' + response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        tableBody.innerHTML = '';  // Clear loading message
+
+                        // Ensure data is an array
+                        if (!Array.isArray(data)) {
+                            throw new TypeError('Response is not an array');
+                        }
+
+                        if (data.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="4">No books issued for this roll number.</td></tr>';
+                        } else {
+                            // Populate the table with the book details
+                            data.forEach(book => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${book.book_name}</td>
+                                    <td>${book.issue_date}</td>
+                                    <td>${book.return_date}</td>
+                                    <td>${book.status}</td>
+                                `;
+                                tableBody.appendChild(row);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching issued books:', error);
+                        errorMessage.innerText = 'An error occurred while fetching your book history. Please try again later.';
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
